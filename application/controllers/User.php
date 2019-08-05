@@ -25,9 +25,6 @@ class User extends CI_Controller
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['title'] = 'Edit Profile';
         $this->form_validation->set_rules('name', 'Full Name', 'required|trim');
-        // var_dump($_FILES['image']['name']);
-        // die;
-
 
         if ($this->form_validation->run() == false) {
             $this->load->view('templates/header', $data);
