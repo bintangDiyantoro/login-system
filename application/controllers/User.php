@@ -66,4 +66,41 @@ class User extends CI_Controller
             redirect('user');
         }
     }
+    function changePassword()
+    {
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['title'] = 'Change Password';
+
+        $this->form_validation->set_rules('current_password', 'current password', 'required|trim');
+        $this->form_validation->set_rules('new_password1', 'new password', 'required|trim|min_length[3]|matches[new_password2]');
+        $this->form_validation->set_rules('new_password2', 'confirm password', 'required|trim|min_length[3]|matches[new_password1]');
+
+        if ($this->form_validation->run() == false) {
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar');
+            $this->load->view('templates/topbar');
+            $this->load->view('user/change-password');
+            $this->load->view('templates/addition');
+            $this->load->view('templates/footer');
+        } else {
+            $current_password = $this->input->post('current_password');
+            $new_password = $this->input->post('new_password2');
+            if (password_verify($current_password, $data['user']['password']) == FALSE) {
+                $this->session->set_flashdata('failed', 'Wrong current password!');
+                redirect('user/changepassword');
+            } else {
+                if ($current_password == $new_password) {
+                    $this->session->set_flashdata('failed', 'New password and current password must be different!');
+                    redirect('user/changepassword');
+                } else {
+                    $new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    $this->db->set('password', $new_password);
+                    $this->db->where('email', $this->session->userdata('email'));
+                    $this->db->update('user');
+                    $this->session->set_flashdata('success', 'Password successfuly changed!');
+                    redirect('user/changepassword');
+                }
+            }
+        }
+    }
 }
