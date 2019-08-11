@@ -48,11 +48,18 @@
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
+                                    <?php elseif ($this->session->flashdata('failed')) : ?>
+                                        <div class="alert alert-danger fade show" role="alert">
+                                            <strong>Failed!</strong> <?= $this->session->flashdata('failed'); ?>
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
                                     <?php endif; ?>
                                     <!-- END OF THE SESSIONS ALERT -->
                                     <form class="user" action="<?= base_url('auth'); ?>" method="post">
                                         <div class="form-group">
-                                            <input type="text" class="form-control form-control-user" id="email" name="email" value="<?= set_value('email'); ?>" placeholder="Enter Email Address..." autocomplete="no" autofocus>
+                                            <input type="text" class="form-control form-control-user" id="email" name="email" value="<?= $this->session->userdata('email'); ?>" placeholder="Enter Email Address..." autocomplete="no" autofocus>
                                             <?= form_error('email', '<small class="text-danger pl-3">', '</small>'); ?>
                                         </div>
                                         <div class="form-group">
