@@ -55,11 +55,18 @@
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
+                                    <?php elseif ($this->session->flashdata('hmmm')) : ?>
+                                        <div class="alert alert-info fade show" role="alert">
+                                            <strong>Hmmm... &#128529;</strong> <?= $this->session->flashdata('hmmm'); ?>
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
                                     <?php endif; ?>
                                     <!-- END OF THE SESSIONS ALERT -->
                                     <form class="user" action="<?= base_url('auth'); ?>" method="post">
                                         <div class="form-group">
-                                            <input type="text" class="form-control form-control-user" id="email" name="email" value="<?= $this->session->userdata('email'); ?>" placeholder="Enter Email Address..." autocomplete="no" autofocus>
+                                            <input type="text" class="form-control form-control-user" id="email" name="email" value="<?= set_value('email'); ?>" placeholder="Enter Email Address..." autocomplete="no" autofocus>
                                             <?= form_error('email', '<small class="text-danger pl-3">', '</small>'); ?>
                                         </div>
                                         <div class="form-group">
@@ -85,7 +92,7 @@
                                     </form>
                                     <hr>
                                     <div class="text-center">
-                                        <a class="small" href="forgot-password.html">Forgot Password?</a>
+                                        <a class="small" href="<?= base_url('auth/forgotpassword'); ?>">Forgot Password?</a>
                                     </div>
                                     <div class="text-center">
                                         <a class="small" href="<?= base_url('auth/registration'); ?>">Create an Account!</a>

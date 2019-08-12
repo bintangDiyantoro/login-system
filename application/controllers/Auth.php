@@ -68,6 +68,9 @@ class Auth extends CI_Controller
         if ($type == 'verify') {
             $this->email->subject('Account Verification');
             $this->email->message('Click this link to activate your account : ' . base_url('auth/verify') . '?email=' . $this->input->post('email') . '&token=' . urlencode($token) . '');
+        } elseif ($type == 'forgot') {
+            $this->email->subject('Reset password');
+            $this->email->message('Click this link to reset your password : ' . base_url('auth/resetpassword') . '?email=' . $this->input->post('email') . '&token=' . urlencode($token) . '');
         }
 
         if ($this->email->send()) {
@@ -172,6 +175,100 @@ class Auth extends CI_Controller
         } else {
             $this->session->set_flashdata('failed', 'Account not activated! Email not registered.');
             redirect('auth');
+        }
+    }
+
+    public function forgotPassword()
+    {
+        $this->form_validation->set_rules('email', 'email', 'required|trim|valid_email');
+        if ($this->form_validation->run() == false) {
+            $data['title'] = 'Forgot Password';
+            $this->load->view('templates/header', $data);
+            $this->load->view('auth/forgot-password');
+            $this->load->view('templates/footer');
+        } else {
+            $user = $this->db->get_where('user', ['email' => $this->input->post('email', true)])->row_array();
+            if ($user) {
+                if ($user['is_active'] == 1) {
+                    $token = base64_encode(random_bytes(32));
+                    $user_token = [
+                        'email' => $user['email'],
+                        'token' => $token,
+                        'date_created' => time(), //optional
+                    ];
+
+                    $this->db->insert('user_token', $user_token);
+                    $this->_sendEmail($token, 'forgot');
+                    $this->session->set_flashdata('success', 'Please check your email to reset your password.');
+                    redirect('auth');
+                } else {
+                    $this->session->set_flashdata('failed', 'Email not activated! Please activate.');
+                    redirect('auth');
+                }
+            } else {
+                $this->session->set_flashdata('failed', 'Email not registered! Please create account.');
+                redirect('auth/registration');
+            }
+        }
+    }
+
+    public function resetpassword()
+    {
+        $email = $this->input->get('email');
+        $token = $this->input->get('token');
+        $user = $this->db->get_where('user', ['email' => $email])->row_array();
+        if ($user) {
+            $user_token = $this->db->get_where('user_token', ['token' => $token])->row_array();
+            if ($user_token) {
+                if (time() - $user_token['date_created'] < 60 * 60 * 24) {
+                    $this->session->set_userdata('reset_email', $email);
+                    $this->changePassword();
+                } else {
+                    $this->session->set_flashdata('failed', 'Reset Paswword failed! Token expired.');
+                    $this->db->delete('user_token', ['email' => $email]);
+                    redirect('auth');
+                }
+            } else {
+                $this->session->set_flashdata('failed', 'Reset password failed! Wrong token.');
+                redirect('auth');
+            }
+        } else {
+            $this->session->set_flashdata('failed', 'Reset password faiiled! Wrong email.');
+            redirect('auth');
+        }
+    }
+
+    public function changePassword()
+    {
+        if (!$this->session->userdata('reset_email')) {
+            redirect('auth');
+        } else {
+            $user = $this->db->get_where('user', ['email' => $this->session->userdata('reset_email')])->row_array();
+            $password = $this->input->post('password1');
+            $this->form_validation->set_rules('password1', 'password', 'required|trim|matches[password2]|min_length[3]');
+            $this->form_validation->set_rules('password2', 'password', 'required|trim|matches[password1]|min_length[3]');
+
+            if ($this->form_validation->run() == false) {
+                $data['title'] = 'Change Password';
+                $this->load->view('templates/header', $data);
+                $this->load->view('auth/change-password');
+                $this->load->view('templates/footer');
+            } else {
+                if (password_verify($password, $user['password'])) {
+                    $this->db->delete('user_token', ['email' => $user['email']]);
+                    $this->session->unset_userdata('reset_email');
+                    $this->session->set_flashdata('hmmm', 'That was your current password, please login');
+                    redirect('auth');
+                } else {
+                    $this->db->set('password', password_hash($password, PASSWORD_DEFAULT));
+                    $this->db->where('email', $user['email']);
+                    $this->db->update('user');
+                    $this->db->delete('user_token', ['email' => $user['email']]);
+                    $this->session->set_flashdata('success', 'Password has been changed! please login');
+                    $this->session->unset_userdata('reset_email');
+                    redirect('auth');
+                }
+            }
         }
     }
 
