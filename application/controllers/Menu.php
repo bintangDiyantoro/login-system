@@ -33,7 +33,7 @@ class Menu extends CI_Controller
             $result2 = $this->db->get('user_access_menu')->row();
             $add2 = $result2->menu_id + 1;
 
-            $this->db->insert('user_menu', ['id' => $add, 'menu' => $this->input->post('menu')]);
+            $this->db->insert('user_menu', ['id' => $add, 'menu' => $this->input->post('menu',TRUE)]);
             $this->db->insert('user_access_menu', ['role_id' => 1, 'menu_id' => $add2]);
             $this->db->insert('user_access_menu', ['role_id' => 2, 'menu_id' => $add2]);
             $this->session->set_flashdata('success', 'New Menu successfully added!');
